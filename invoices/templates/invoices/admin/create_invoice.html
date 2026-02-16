@@ -1,0 +1,429 @@
+{% extends 'invoices/admin_base.html' %}
+
+{% block title %}請求書作成{% endblock %}
+
+{% block page_title %}請求書作成{% endblock %}
+
+{% block extra_css %}
+<style>
+    .company-info {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 6px;
+        margin-top: 20px;
+        border: 1px solid #eee;
+    }
+    
+    .company-info-item {
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .company-info-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 0;
+    }
+    
+    .company-info-item label {
+        width: 140px;
+        font-weight: 600;
+        color: #7f8c8d;
+        font-size: 13px;
+    }
+    
+    .company-info-item span {
+        color: #2c3e50;
+        font-weight: 500;
+    }
+    
+    .items-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fff;
+    }
+    
+    .item-header {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 1px;
+        background: #f1f2f6;
+        border-bottom: 1px solid #ddd;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .item-header > div {
+        padding: 15px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #7f8c8d;
+        text-transform: uppercase;
+    }
+    
+    .item-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 15px;
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        transition: background 0.2s;
+    }
+    
+    .item-row:hover {
+        background-color: #fcfcfc;
+    }
+    
+    .item-row:last-child {
+        border-bottom: none;
+    }
+    
+    .item-row input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    .item-row input:focus {
+        border-color: #3498db;
+        background-color: #fff;
+    }
+    
+    .item-row input[readonly] {
+        background-color: #f9f9f9;
+        border-color: transparent;
+        font-weight: 600;
+        color: #2c3e50;
+        text-align: right;
+    }
+    
+    .form-group select {
+        cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237f8c8d' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+        appearance: none;
+        padding-right: 40px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form id="invoiceForm" method="post" action="{% url 'invoices:generate_invoice' %}">
+    {% csrf_token %}
+    
+    <div class="section">
+        <h3>取引先会社選択</h3>
+        <div class="form-group">
+            <label for="company_code">取引先会社・会社コード *</label>
+            <div style="position: relative;">
+                <input 
+                    type="text" 
+                    id="company_search" 
+                    placeholder="会社コードまたは会社名で検索..."
+                    autocomplete="off"
+                    style="width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px;"
+                >
+                <select 
+                    id="company_code" 
+                    name="company_code" 
+                    required 
+                    style="display: none;"
+                >
+                    <option value="">選択してください</option>
+                    {% for company in companies %}
+                    <option value="{{ company.company_code }}" data-code="{{ company.company_code }}" data-name="{{ company.company_name }}">
+                        {{ company.company_code }} - {{ company.company_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div id="company_dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; max-height: 300px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+        </div>
+        
+        <div id="companyInfo" class="company-info" style="display: none;">
+            <div class="company-info-item">
+                <label>会社名</label>
+                <span id="company_name"></span>
+            </div>
+            <div class="company-info-item">
+                <label>担当者</label>
+                <span id="contact_person"></span>
+            </div>
+            <div class="company-info-item">
+                <label>住所</label>
+                <span id="address"></span>
+            </div>
+            <div class="company-info-item">
+                <label>郵便番号/都道府県</label>
+                <span id="postal_prefecture"></span>
+            </div>
+            <div class="company-info-item">
+                <label>電話番号</label>
+                <span id="phone"></span>
+            </div>
+            <div class="company-info-item">
+                <label>メールアドレス</label>
+                <span id="email"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>請求書番号</h3>
+        <div class="form-group">
+            <label for="invoice_number">請求書番号 *</label>
+            <input type="text" id="invoice_number" name="invoice_number" required readonly disabled style="background-color: #f5f5f5; cursor: not-allowed; color: #666;">
+            <input type="hidden" id="invoice_number_hidden" name="invoice_number" value="">
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>請求内訳</h3>
+        <div class="items-container">
+            <div class="item-header">
+                <div>請求内容</div>
+                <div>個数</div>
+                <div>単価</div>
+                <div>金額</div>
+            </div>
+            {% for i in "0123456789" %}
+            <div class="item-row">
+                <input type="text" name="item_name[]" placeholder="項目名を入力" class="item-name">
+                <input type="number" name="item_quantity[]" placeholder="0" min="1" value="1" class="item-quantity" onchange="calculateAmount(this)">
+                <input type="number" name="item_price[]" placeholder="0" min="0" step="0.01" value="0" class="item-price" onchange="calculateAmount(this)">
+                <input type="number" name="item_amount[]" placeholder="0" min="0" step="0.01" value="0" class="item-amount" readonly>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="section" style="background: transparent; box-shadow: none; border: none; padding: 0;">
+        <button type="submit" class="btn btn-primary" style="padding: 15px 40px; font-size: 16px;">請求書作成</button>
+        <button type="button" class="btn btn-secondary" onclick="clearForm()" style="margin-left: 10px;">リセット</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 検索可能なセレクトボックス
+    const companySearch = document.getElementById('company_search');
+    const companyCodeSelect = document.getElementById('company_code');
+    const companyDropdown = document.getElementById('company_dropdown');
+    const companies = Array.from(companyCodeSelect.options).slice(1).map(option => ({
+        code: option.value,
+        name: option.dataset.name,
+        text: option.textContent
+    }));
+    
+    let selectedCompanyCode = '';
+    
+    // 検索入力時の処理
+    companySearch.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        
+        if (searchTerm === '') {
+            companyDropdown.style.display = 'none';
+            companyCodeSelect.value = '';
+            selectedCompanyCode = '';
+            document.getElementById('companyInfo').style.display = 'none';
+            return;
+        }
+        
+        // 部分一致で検索（会社コードまたは会社名）
+        const filtered = companies.filter(company => 
+            company.code.toLowerCase().includes(searchTerm) || 
+            company.name.toLowerCase().includes(searchTerm) ||
+            company.text.toLowerCase().includes(searchTerm)
+        );
+        
+        if (filtered.length === 0) {
+            companyDropdown.innerHTML = '<div style="padding: 15px; color: #999; text-align: center;">該当する取引先会社が見つかりません</div>';
+            companyDropdown.style.display = 'block';
+            return;
+        }
+        
+        // ドロップダウンに結果を表示
+        companyDropdown.innerHTML = filtered.map(company => 
+            `<div class="company-option" data-code="${company.code}" style="padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background 0.2s;">
+                <div style="font-weight: 600; color: #333;">${company.code}</div>
+                <div style="font-size: 12px; color: #666; margin-top: 2px;">${company.name}</div>
+            </div>`
+        ).join('');
+        
+        companyDropdown.style.display = 'block';
+        
+        // クリックイベントを追加
+        companyDropdown.querySelectorAll('.company-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const code = this.dataset.code;
+                selectedCompanyCode = code;
+                companyCodeSelect.value = code;
+                companySearch.value = companies.find(c => c.code === code).text;
+                companyDropdown.style.display = 'none';
+                loadCompanyInfo(code);
+                generateInvoiceNumber(code);
+            });
+            
+            option.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#f5f5f5';
+            });
+            
+            option.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = 'white';
+            });
+        });
+    });
+    
+    // フォーカス時の処理
+    companySearch.addEventListener('focus', function() {
+        if (this.value.trim() !== '') {
+            this.dispatchEvent(new Event('input'));
+        }
+    });
+    
+    // 外部クリックでドロップダウンを閉じる
+    document.addEventListener('click', function(e) {
+        if (!companySearch.contains(e.target) && !companyDropdown.contains(e.target)) {
+            companyDropdown.style.display = 'none';
+        }
+    });
+    
+    // キーボード操作
+    companySearch.addEventListener('keydown', function(e) {
+        const options = companyDropdown.querySelectorAll('.company-option');
+        let currentIndex = -1;
+        
+        options.forEach((opt, idx) => {
+            if (opt.style.backgroundColor === 'rgb(245, 245, 245)') {
+                currentIndex = idx;
+            }
+        });
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            currentIndex = (currentIndex + 1) % options.length;
+            options.forEach(opt => opt.style.backgroundColor = 'white');
+            if (options[currentIndex]) {
+                options[currentIndex].style.backgroundColor = '#f5f5f5';
+                options[currentIndex].scrollIntoView({ block: 'nearest' });
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            currentIndex = currentIndex <= 0 ? options.length - 1 : currentIndex - 1;
+            options.forEach(opt => opt.style.backgroundColor = 'white');
+            if (options[currentIndex]) {
+                options[currentIndex].style.backgroundColor = '#f5f5f5';
+                options[currentIndex].scrollIntoView({ block: 'nearest' });
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (options[currentIndex]) {
+                options[currentIndex].click();
+            } else if (options.length > 0) {
+                options[0].click();
+            }
+        } else if (e.key === 'Escape') {
+            companyDropdown.style.display = 'none';
+        }
+    });
+    
+    // 請求書番号を自動生成（会社コード_YYYY_MM_DD形式）
+    function generateInvoiceNumber(companyCode) {
+        if (!companyCode) {
+            document.getElementById('invoice_number').value = '';
+            document.getElementById('invoice_number_hidden').value = '';
+            return;
+        }
+        
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const invoiceNumber = `${companyCode}_${year}_${month}_${day}`;
+        
+        document.getElementById('invoice_number').value = invoiceNumber;
+        document.getElementById('invoice_number_hidden').value = invoiceNumber;
+    }
+    
+    async function loadCompanyInfo(companyCode) {
+        const companyInfoEl = document.getElementById('companyInfo');
+        
+        try {
+            const response = await fetch(`{% url 'invoices:get_company_info' %}?company_code=${companyCode}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const company = data.company;
+                document.getElementById('company_name').textContent = company.company_name;
+                document.getElementById('contact_person').textContent = company.contact_person;
+                document.getElementById('address').textContent = company.address;
+                document.getElementById('postal_prefecture').textContent = `${company.postal_code} ${company.prefecture}`;
+                document.getElementById('phone').textContent = company.phone;
+                document.getElementById('email').textContent = company.email;
+                companyInfoEl.style.display = 'block';
+                generateInvoiceNumber(companyCode);
+            } else {
+                companyInfoEl.style.display = 'none';
+                generateInvoiceNumber('');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            companyInfoEl.style.display = 'none';
+            generateInvoiceNumber('');
+        }
+    }
+    
+    function calculateAmount(input) {
+        const row = input.closest('.item-row');
+        const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
+        const price = parseFloat(row.querySelector('.item-price').value) || 0;
+        const amount = quantity * price;
+        row.querySelector('.item-amount').value = amount.toFixed(2);
+    }
+    
+    // フォーム送信時のバリデーション
+    document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+        if (!companyCodeSelect.value) {
+            e.preventDefault();
+            alert('取引先会社を選択してください');
+            companySearch.focus();
+            return false;
+        }
+        
+        // 請求書番号をhidden inputから取得（disabled inputは送信されないため）
+        const invoiceNumber = document.getElementById('invoice_number_hidden').value;
+        if (!invoiceNumber) {
+            e.preventDefault();
+            alert('請求書番号が生成されていません。取引先会社を選択してください。');
+            return false;
+        }
+    });
+    
+    function clearForm() {
+        if (confirm('入力内容をクリアしますか？')) {
+            document.getElementById('invoiceForm').reset();
+            companySearch.value = '';
+            companyCodeSelect.value = '';
+            selectedCompanyCode = '';
+            companyDropdown.style.display = 'none';
+            document.getElementById('companyInfo').style.display = 'none';
+            document.getElementById('invoice_number').value = '';
+            document.getElementById('invoice_number_hidden').value = '';
+            document.querySelectorAll('.item-row').forEach(row => {
+                calculateAmount(row.querySelector('.item-quantity'));
+            });
+        }
+    }
+</script>
+{% endblock %}

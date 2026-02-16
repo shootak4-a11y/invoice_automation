@@ -1,0 +1,83 @@
+{% extends 'invoices/admin_base.html' %}
+
+{% block title %}請求書項目管理{% endblock %}
+
+{% block page_title %}請求書項目管理{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h3>請求書項目追加</h3>
+    <form id="addInvoiceItemForm">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>項目名 *</label>
+            <input type="text" name="name" required>
+        </div>
+        <div class="form-group">
+            <label>説明</label>
+            <textarea name="description" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">追加</button>
+    </form>
+</div>
+
+<div class="section">
+    <h3>請求書項目一覧</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>項目名</th>
+                <th>説明</th>
+                <th>作成日時</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice_items %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.description|default:"-" }}</td>
+                <td>{{ item.created_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" style="text-align: center; color: #999;">請求書項目が登録されていません</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('addInvoiceItemForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        try {
+            const response = await fetch('{% url "invoices:add_invoice_item_template" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                alert(data.message);
+                this.reset();
+                location.reload();
+            } else {
+                alert('エラー: ' + data.error);
+            }
+        } catch (error) {
+            alert('エラーが発生しました: ' + error);
+        }
+    });
+</script>
+{% endblock %}
+
+
+
+

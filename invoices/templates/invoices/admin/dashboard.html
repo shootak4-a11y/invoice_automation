@@ -1,0 +1,61 @@
+{% extends 'invoices/admin_base.html' %}
+
+{% block title %}ダッシュボード{% endblock %}
+
+{% block page_title %}ダッシュボード{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h3>統計情報</h3>
+    <div class="grid-2">
+        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <div style="font-size: 36px; font-weight: bold; color: #667eea;">{{ companies_count }}</div>
+            <div style="color: #666; margin-top: 10px;">取引先会社数</div>
+        </div>
+        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <div style="font-size: 36px; font-weight: bold; color: #667eea;">{{ invoice_items_count }}</div>
+            <div style="color: #666; margin-top: 10px;">請求書項目数</div>
+        </div>
+        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <div style="font-size: 36px; font-weight: bold; color: #667eea;">{{ users_count }}</div>
+            <div style="color: #666; margin-top: 10px;">ユーザー数</div>
+        </div>
+        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <div style="font-size: 36px; font-weight: bold; color: #667eea;">{{ invoices_count }}</div>
+            <div style="color: #666; margin-top: 10px;">請求書作成数</div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h3>クイックアクセス</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <a href="{% url 'invoices:admin_companies' %}" style="display: block; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; text-align: center; transition: transform 0.3s;">
+            <div style="font-size: 24px; margin-bottom: 10px;">🏢</div>
+            <div style="font-weight: 600;">取引先会社管理</div>
+        </a>
+        <a href="{% url 'invoices:admin_invoice_items' %}" style="display: block; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; text-align: center; transition: transform 0.3s;">
+            <div style="font-size: 24px; margin-bottom: 10px;">📋</div>
+            <div style="font-weight: 600;">請求書項目管理</div>
+        </a>
+        {% if is_admin %}
+        <a href="{% url 'invoices:admin_users' %}" style="display: block; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; text-align: center; transition: transform 0.3s;">
+            <div style="font-size: 24px; margin-bottom: 10px;">👥</div>
+            <div style="font-weight: 600;">ユーザー管理</div>
+        </a>
+        {% endif %}
+        <a href="{% url 'invoices:admin_create_invoice' %}" style="display: block; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; text-align: center; transition: transform 0.3s;">
+            <div style="font-size: 24px; margin-bottom: 10px;">📄</div>
+            <div style="font-weight: 600;">請求書作成</div>
+        </a>
+        <a href="{% url 'invoices:admin_export_history' %}" style="display: block; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; text-align: center; transition: transform 0.3s;">
+            <div style="font-size: 24px; margin-bottom: 10px;">📊</div>
+            <div style="font-weight: 600;">取引履歴出力</div>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

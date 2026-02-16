@@ -1,0 +1,63 @@
+{% extends 'invoices/admin_base.html' %}
+
+{% block title %}取引履歴出力{% endblock %}
+
+{% block page_title %}取引履歴出力{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h3>月ごとの取引履歴出力</h3>
+    <form method="post" action="{% url 'invoices:export_monthly_history' %}">
+        {% csrf_token %}
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="company_code">会社コード *</label>
+                <input 
+                    type="text" 
+                    id="company_code" 
+                    name="company_code" 
+                    required 
+                    placeholder="会社コードを入力"
+                    style="text-transform: uppercase;"
+                >
+            </div>
+            <div class="form-group">
+                <label for="year">年 *</label>
+                <input type="number" id="year" name="year" required min="2000" max="2100">
+            </div>
+            <div class="form-group">
+                <label for="month">月 *</label>
+                <select id="month" name="month" required>
+                    <option value="1">1月</option>
+                    <option value="2">2月</option>
+                    <option value="3">3月</option>
+                    <option value="4">4月</option>
+                    <option value="5">5月</option>
+                    <option value="6">6月</option>
+                    <option value="7">7月</option>
+                    <option value="8">8月</option>
+                    <option value="9">9月</option>
+                    <option value="10">10月</option>
+                    <option value="11">11月</option>
+                    <option value="12">12月</option>
+                </select>
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button type="submit" class="btn btn-primary">取引履歴を出力</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const now = new Date();
+    document.getElementById('year').value = now.getFullYear();
+    document.getElementById('month').value = now.getMonth() + 1;
+</script>
+{% endblock %}
+
+
+
+
