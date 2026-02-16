@@ -12,14 +12,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('auth', '0001_initial'),  # Group, Permission が必要
         ('invoices', '0001_initial'),
     ]
     run_before = [
-        ('auth', '0012_alter_user_first_name_max_length'),  # CustomUser を auth より先に作成
+        ('auth', '0001_initial'),  # CustomUser を auth より先に作成（循環依存回避）
     ]
 
     operations = [
+        # CustomUser を M2M なしで先に作成（auth.Group/Permission は未作成のため）
         migrations.CreateModel(
             name='CustomUser',
             fields=[
@@ -37,8 +37,6 @@ class Migration(migrations.Migration):
                 ('role', models.CharField(choices=[('general', '一般'), ('manager', '管理者'), ('director', '責任者')], default='general', max_length=20, verbose_name='ユーザー種別')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='作成日時')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='更新日時')),
-                ('groups', models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.group', verbose_name='groups')),
-                ('user_permissions', models.ManyToManyField(blank=True, help_text='Specific permissions for this user.', related_name='user_set', related_query_name='user', to='auth.permission', verbose_name='user permissions')),
             ],
             options={
                 'verbose_name': 'ユーザー',
