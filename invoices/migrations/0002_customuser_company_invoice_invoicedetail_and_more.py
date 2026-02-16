@@ -12,8 +12,11 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('auth', '0012_alter_user_first_name_max_length'),
+        ('auth', '0001_initial'),  # Group, Permission が必要
         ('invoices', '0001_initial'),
+    ]
+    run_before = [
+        ('auth', '0012_alter_user_first_name_max_length'),  # CustomUser を auth より先に作成
     ]
 
     operations = [
